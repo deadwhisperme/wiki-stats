@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import codecs
 
 import array
 
@@ -18,7 +19,7 @@ class WikiGraph:
     def load_from_file(self, file):
         print('Загружаю граф из файла: ' + file)
 
-        with open(file) as f:
+        with codecs.open(file,"r","utf_8_sig") as f:
             (n, _nlinks) = (map(int, f.readline().split()))
             self._titles = []
 
@@ -63,6 +64,35 @@ class WikiGraph:
 
     def get_page_size(self, _id):
         return self._sizes(_id)
+    def path(self):
+        start = self.get_id("Python")
+        end = self.get_id("Список_файловых_систем")
+        shortest_leng = {vert:float("+inf") for vert in range(self.get_number_of_pages())}
+        print("Запускаем поиск в ширину")
+        shortest_path = {vert:[] for vert in range(self.get_number_of_pages())}
+        queue = [start]
+        fired = [start]
+        shortest_leng[start] = 0
+        while queue:
+            star = queue.pop(0)
+            for neibours in self.get_links_from(star):
+                new_shortest_path_length = shortest_leng[star] + 1
+                if neibours not in fired:
+                    queue.append(neibours)
+                    fired.append(neibours)
+                if new_shortest_path_length <= shortest_leng[neibours]:
+                    shortest_leng[neibours] = new_shortest_path_length
+                    shortest_path[neibours] = (star,neibours)
+        x = shortest_path[end]
+        path = []
+        path.insert(0,x)
+        print("Поиск закончен. Найден путь:")
+        print(self.get_title(start))
+        while x[0] != start:
+            path.insert(0,shortest_path[x[0]])
+            x = shortest_path[x[0]]
+        for y in path:
+            print(self.get_title(y[1]))
 
 
 def analyse_links_from_page(G):
@@ -138,35 +168,6 @@ def hist(fname, data, bins, xlabel, ylabel, title, facecolor='green', alpha=0.5,
     plt.hist(x=data,bins=bins,color=facecolor,label=title,**kwargs)
     plt.savefig(fname)
     plt.show()
-def path(self):
-    start = self.get_id("Python")
-    end = self.get_id("Список_файловых_систем")
-    shortest_leng = {vert:float("+inf") for vert in range(self.get_number_of_pages())}
-    print("Запускаем поиск в ширину")
-    shortest_path = {vert:[] for vert in range(self.get_number_of_pages())}
-    queue = [start]
-    fired = [start]
-    shortest_leng[start] = 0
-    while queue:
-        star = queue.pop(0)
-        for neibours in self.get_links_from(star):
-            new_shortest_path_length = shortest_leng[star] + 1
-            if neibours not in fired:
-                queue.append(neibours)
-                fired.append(neibours)
-            if new_shortest_path_length <= shortest_leng[neibours]:
-                shortest_leng[neibours] = new_shortest_path_length
-                shortest_path[neibours] = (star,neibours)  
-    x = shortest_path[end]
-    path = []
-    path.insert(0,x)
-    print("Поиск закончен. Найден путь:")
-    print(self.get_title(start))
-    while x[0] != start:
-        path.insert(0,shortest_path[x[0]])
-        x = shortest_path[x[0]]
-    for y in path:
-        print(self.get_title(y[1]))
 if __name__ == '__main__':
     wg = WikiGraph()
     wg.load_from_file('wiki_small.txt')
